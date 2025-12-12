@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>对接公告API</title>
+    <style>
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
+    </style>
+</head>
+<body>
+    <button onclick="fetchBulletin('GET')">GET 请求公告</button>
+    <button onclick="fetchBulletin('POST')">POST 请求公告</button>
+    <div class="result" id="result"></div>
+
+    <script>
+        const resultDom = document.getElementById('result');
+        // 免费 CORS 代理前缀 + 目标 API
+        const proxyPrefix = 'https://cors-anywhere.herokuapp.com/';
+        const targetApi = 'http://shuixian.ltd/main/api/bulletin/bulletin.php';
+        const params = { admin: 3855584220 };
+
+        async function fetchBulletin(method) {
+            try {
+                resultDom.textContent = '请求中...';
+                let url, options = { method: method };
+
+                if (method === 'GET') {
+                    url = `${proxyPrefix}${targetApi}?${new URLSearchParams(params)}`;
+                } else if (method === 'POST') {
+                    url = `${proxyPrefix}${targetApi}`;
+                    options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
+                    options.body = new URLSearchParams(params);
+                }
+
+                const response = await fetch(url, options);
+                const data = await response.text();
+                try {
+                    resultDom.textContent = JSON.stringify(JSON.parse(data), null, 2);
+                } catch {
+                    resultDom.textContent = data;
+                }
+            } catch (error) {
+                resultDom.textContent = `请求失败：${error.message}`;
+            }
+        }
+    </script>
+</body>
+</html>
