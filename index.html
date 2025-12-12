@@ -1,62 +1,60 @@
-
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>tony</title>
+    <title>对接公告API</title>
     <style>
-        body { padding: 20px; font-family: Arial, sans-serif; }
-        .container { max-width: 600px; margin: 0 auto; }
-        button { padding: 8px 16px; margin: 5px 0; cursor: pointer; }
-        #result { margin-top: 20px; padding: 15px; border: 1px solid #ccc; white-space: pre-wrap; }
+        .result {
+            margin-top: 20px;
+            padding: 10px;
+            border: 1px solid #ccc;
+            border-radius: 4px;
+            white-space: pre-wrap;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h3>公告API请求测试</h3>
-        <button onclick="fetchData('GET')">GET方式请求</button>
-        <button onclick="fetchData('POST')">POST方式请求</button>
-        <div id="result">点击按钮发起请求...</div>
-    </div>
+    <button onclick="fetchBulletin('GET')">GET 请求公告</button>
+    <button onclick="fetchBulletin('POST')">POST 请求公告</button>
+    <div class="result" id="result"></div>
 
     <script>
-        // API地址
+        // API 地址和参数
         const apiUrl = 'http://shuixian.ltd/main/api/bulletin/bulletin.php';
-        // 请求参数
         const params = { admin: 3855584220 };
+        const resultDom = document.getElementById('result');
 
-        // 发起请求的函数
-        function fetchData(method) {
-            const resultDom = document.getElementById('result');
-            resultDom.textContent = '请求中...';
+        async function fetchBulletin(method) {
+            try {
+                let response;
+                resultDom.textContent = '请求中...';
+                
+                if (method === 'GET') {
+                    // GET 请求：参数拼接在 URL 上
+                    const url = new URL(apiUrl);
+                    url.search = new URLSearchParams(params);
+                    response = await fetch(url, { method: 'GET' });
+                } else if (method === 'POST') {
+                    // POST 请求：参数以 form 格式传递
+                    response = await fetch(apiUrl, {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded'
+                        },
+                        body: new URLSearchParams(params)
+                    });
+                }
 
-            // 处理GET请求（参数拼接到URL）
-            if (method === 'GET') {
-                const url = `${apiUrl}?admin=${params.admin}`;
-                fetch(url, { method: 'GET' })
-                    .then(res => res.text())
-                    .then(data => {
-                        // 尝试解析为JSON，若失败则展示原始文本
-                        try { resultDom.textContent = JSON.stringify(JSON.parse(data), null, 2); }
-                        catch { resultDom.textContent = data; }
-                    })
-                    .catch(err => resultDom.textContent = `请求失败: ${err}`);
-            }
-
-            // 处理POST请求（参数放在请求体）
-            if (method === 'POST') {
-                fetch(apiUrl, {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-                    body: `admin=${params.admin}`
-                })
-                    .then(res => res.text())
-                    .then(data => {
-                        try { resultDom.textContent = JSON.stringify(JSON.parse(data), null, 2); }
-                        catch { resultDom.textContent = data; }
-                    })
-                    .catch(err => resultDom.textContent = `请求失败: ${err}`);
+                // 解析响应结果
+                const data = await response.text();
+                // 尝试转为 JSON 格式化显示
+                try {
+                    resultDom.textContent = JSON.stringify(JSON.parse(data), null, 2);
+                } catch {
+                    resultDom.textContent = data;
+                }
+            } catch (error) {
+                resultDom.textContent = `请求失败：${error.message}`;
             }
         }
     </script>
