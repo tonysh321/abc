@@ -2,53 +2,797 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <title>对接公告API</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>千千音乐点歌工具</title>
     <style>
-        .result {
+        :root {
+            --primary-color: #7c3aed;
+            --primary-hover: #6d28d9;
+            --secondary-color: #f8fafc;
+            --text-primary: #1f2937;
+            --text-secondary: #6b7280;
+            --border-color: #e5e7eb;
+            --success-color: #10b981;
+            --error-color: #ef4444;
+            --shadow-sm: 0 1px 3px rgba(0,0,0,0.12);
+            --shadow-md: 0 4px 6px -1px rgba(0,0,0,0.1);
+            --shadow-lg: 0 10px 15px -3px rgba(0,0,0,0.1);
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 16px;
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC', 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            min-height: 100vh;
+            padding: 20px;
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1000px;
+            margin: 0 auto;
+            animation: fadeIn 0.5s ease;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+        }
+
+        .header h1 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            margin-bottom: 8px;
+        }
+
+        .header .subtitle {
+            color: var(--text-secondary);
+            font-size: 1.1rem;
+        }
+
+        .card {
+            background: white;
+            border-radius: var(--radius-lg);
+            padding: 40px;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 30px;
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+        }
+
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 24px;
+            margin-bottom: 32px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .form-label {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-bottom: 8px;
+            font-weight: 500;
+            color: var(--text-primary);
+            font-size: 0.95rem;
+        }
+
+        .required::after {
+            content: '*';
+            color: var(--error-color);
+            margin-left: 4px;
+        }
+
+        .form-input {
+            padding: 14px 16px;
+            border: 2px solid var(--border-color);
+            border-radius: var(--radius-md);
+            font-size: 16px;
+            transition: all 0.3s ease;
+            background: var(--secondary-color);
+        }
+
+        .form-input:focus {
+            outline: none;
+            border-color: var(--primary-color);
+            box-shadow: 0 0 0 3px rgba(124, 58, 237, 0.1);
+        }
+
+        .form-input::placeholder {
+            color: #9ca3af;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
+            color: white;
+            border: none;
+            padding: 16px 32px;
+            border-radius: var(--radius-md);
+            font-size: 1.1rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 10px;
+            width: 100%;
+            margin-top: 10px;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+            background: linear-gradient(135deg, var(--primary-hover) 0%, #9333ea 100%);
+        }
+
+        .btn-primary:active {
+            transform: translateY(0);
+        }
+
+        .btn-primary i {
+            font-size: 1.2rem;
+        }
+
+        .tip-box {
+            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 100%);
+            border-radius: var(--radius-md);
+            padding: 20px;
+            margin-top: 30px;
+            border-left: 4px solid var(--primary-color);
+        }
+
+        .tip-box h3 {
+            color: var(--primary-color);
+            margin-bottom: 10px;
+            font-size: 1.1rem;
+        }
+
+        .tip-box ul {
+            list-style: none;
+            padding-left: 0;
+        }
+
+        .tip-box li {
+            margin-bottom: 8px;
+            padding-left: 24px;
+            position: relative;
+            color: var(--text-secondary);
+        }
+
+        .tip-box li::before {
+            content: '•';
+            color: var(--primary-color);
+            position: absolute;
+            left: 8px;
+            font-size: 1.2rem;
+        }
+
+        /* 结果区域样式 */
+        .result-container {
+            display: none;
+            animation: slideUp 0.4s ease;
+        }
+
+        .result-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid var(--border-color);
+        }
+
+        .result-header h3 {
+            color: var(--text-primary);
+            font-size: 1.4rem;
+        }
+
+        .clear-btn {
+            background: var(--secondary-color);
+            border: 2px solid var(--border-color);
+            color: var(--text-secondary);
+            padding: 8px 16px;
+            border-radius: var(--radius-sm);
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .clear-btn:hover {
+            background: var(--error-color);
+            color: white;
+            border-color: var(--error-color);
+        }
+
+        .music-list {
+            max-height: 400px;
+            overflow-y: auto;
+            padding-right: 10px;
+        }
+
+        .music-item {
+            padding: 16px;
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius-md);
+            margin-bottom: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+
+        .music-item:hover {
+            transform: translateX(4px);
+            border-color: var(--primary-color);
+            background: linear-gradient(135deg, #faf5ff 0%, #f3e8ff 100%);
+        }
+
+        .music-index {
+            background: var(--primary-color);
+            color: white;
+            width: 36px;
+            height: 36px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            flex-shrink: 0;
+        }
+
+        .music-info {
+            flex: 1;
+        }
+
+        .music-title {
+            font-weight: 600;
+            color: var(--text-primary);
+            margin-bottom: 4px;
+            font-size: 1.1rem;
+        }
+
+        .music-singer {
+            color: var(--text-secondary);
+            font-size: 0.95rem;
+        }
+
+        /* 音乐详情样式 */
+        .music-detail {
+            animation: fadeIn 0.5s ease;
+        }
+
+        .detail-header {
+            text-align: center;
+            margin-bottom: 30px;
+        }
+
+        .detail-cover {
+            width: 200px;
+            height: 200px;
+            border-radius: var(--radius-lg);
+            object-fit: cover;
+            box-shadow: var(--shadow-md);
+            margin-bottom: 20px;
+            border: 5px solid white;
+        }
+
+        .detail-title {
+            font-size: 1.8rem;
+            font-weight: 700;
+            color: var(--text-primary);
+            margin-bottom: 8px;
+        }
+
+        .detail-singer {
+            font-size: 1.2rem;
+            color: var(--text-secondary);
+            margin-bottom: 20px;
+        }
+
+        .audio-player {
+            width: 100%;
+            margin: 30px 0;
+            border-radius: var(--radius-md);
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 12px;
             margin-top: 20px;
-            padding: 10px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-            white-space: pre-wrap;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: var(--radius-md);
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--primary-color) 0%, #a855f7 100%);
+            color: white;
+        }
+
+        .action-btn.secondary {
+            background: var(--secondary-color);
+            color: var(--text-primary);
+            border: 2px solid var(--border-color);
+        }
+
+        .action-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: var(--shadow-md);
+        }
+
+        /* 错误提示 */
+        .error-message {
+            background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+            border: 2px solid var(--error-color);
+            color: var(--error-color);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin: 20px 0;
+            animation: shake 0.5s ease;
+        }
+
+        .success-message {
+            background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+            border: 2px solid var(--success-color);
+            color: var(--success-color);
+            padding: 20px;
+            border-radius: var(--radius-md);
+            text-align: center;
+            margin: 20px 0;
+        }
+
+        /* 加载动画 */
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 4px solid var(--border-color);
+            border-top-color: var(--primary-color);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        /* 动画定义 */
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(20px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-10px); }
+            75% { transform: translateX(10px); }
+        }
+
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .container {
+                padding: 10px;
+            }
+            
+            .header h1 {
+                font-size: 2rem;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .detail-cover {
+                width: 150px;
+                height: 150px;
+            }
+            
+            .action-buttons {
+                flex-direction: column;
+            }
+        }
+
+        @media (max-width: 480px) {
+            .header h1 {
+                font-size: 1.8rem;
+            }
+            
+            .form-input {
+                padding: 12px;
+            }
+            
+            .btn-primary {
+                padding: 14px;
+            }
+            
+            .music-item {
+                padding: 12px;
+            }
         }
     </style>
 </head>
 <body>
-    <button onclick="fetchBulletin('GET')">GET 请求公告</button>
-    <button onclick="fetchBulletin('POST')">POST 请求公告</button>
-    <div class="result" id="result"></div>
+    <div class="container">
+        <!-- 页面标题 -->
+        <div class="header">
+            <h1>🎵 千千音乐点歌工具</h1>
+            <p class="subtitle">快速搜索和播放您喜爱的音乐</p>
+        </div>
+
+        <!-- 搜索卡片 -->
+        <div class="card">
+            <div class="form-grid">
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i>🔍</i>
+                        搜索关键词
+                    </label>
+                    <input type="text" id="msg" class="form-input" placeholder="输入歌名或歌手，如：周杰伦" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label required">
+                        <i>🎵</i>
+                        歌曲序号
+                    </label>
+                    <input type="number" id="n" class="form-input" placeholder="输入数字序号，留空返回列表" min="1" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i>📊</i>
+                        最大数量
+                    </label>
+                    <input type="number" id="limit" class="form-input" placeholder="默认：30" min="1" max="100" value="30" autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <label class="form-label">
+                        <i>📝</i>
+                        返回格式
+                    </label>
+                    <select id="type" class="form-input">
+                        <option value="json">JSON格式</option>
+                        <option value="text">文本格式</option>
+                    </select>
+                </div>
+            </div>
+
+            <button class="btn-primary" id="search-btn">
+                <i>🎯</i>
+                搜索音乐
+            </button>
+
+            <!-- 提示信息 -->
+            <div class="tip-box">
+                <h3>使用提示</h3>
+                <ul>
+                    <li>搜索关键词为必填项，支持歌名或歌手名搜索</li>
+                    <li>歌曲序号留空可返回搜索结果列表</li>
+                    <li>点击列表中的歌曲可以查看详细信息和播放</li>
+                    <li>最大数量限制仅对列表模式生效</li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- 加载动画 -->
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <p>正在搜索音乐，请稍候...</p>
+        </div>
+
+        <!-- 结果区域 -->
+        <div class="card result-container" id="result-container">
+            <div class="result-header">
+                <h3 id="result-title">搜索结果</h3>
+                <button class="clear-btn" id="clear-btn">
+                    <i>🗑️</i>
+                    清除结果
+                </button>
+            </div>
+            <div id="result-content"></div>
+        </div>
+    </div>
 
     <script>
-        const resultDom = document.getElementById('result');
-        // 免费 CORS 代理前缀 + 目标 API
-        const proxyPrefix = 'https://cors-anywhere.herokuapp.com/';
-        const targetApi = 'http://shuixian.ltd/main/api/bulletin/bulletin.php';
-        const params = { admin: 3855584220 };
+        // 音乐工具类
+        class MusicTool {
+            constructor() {
+                this.musicListData = [];
+                this.currentMusic = null;
+                this.initElements();
+                this.bindEvents();
+            }
 
-        async function fetchBulletin(method) {
-            try {
-                resultDom.textContent = '请求中...';
-                let url, options = { method: method };
+            initElements() {
+                this.elements = {
+                    msg: document.getElementById('msg'),
+                    n: document.getElementById('n'),
+                    limit: document.getElementById('limit'),
+                    type: document.getElementById('type'),
+                    searchBtn: document.getElementById('search-btn'),
+                    resultContainer: document.getElementById('result-container'),
+                    resultTitle: document.getElementById('result-title'),
+                    resultContent: document.getElementById('result-content'),
+                    loading: document.getElementById('loading'),
+                    clearBtn: document.getElementById('clear-btn')
+                };
+            }
 
-                if (method === 'GET') {
-                    url = `${proxyPrefix}${targetApi}?${new URLSearchParams(params)}`;
-                } else if (method === 'POST') {
-                    url = `${proxyPrefix}${targetApi}`;
-                    options.headers = { 'Content-Type': 'application/x-www-form-urlencoded' };
-                    options.body = new URLSearchParams(params);
+            bindEvents() {
+                this.elements.searchBtn.addEventListener('click', () => this.getMusic());
+                this.elements.clearBtn.addEventListener('click', () => this.clearResults());
+                
+                // 回车键搜索
+                this.elements.msg.addEventListener('keypress', (e) => {
+                    if (e.key === 'Enter') this.getMusic();
+                });
+            }
+
+            async getMusic() {
+                // 获取输入参数
+                const msg = this.elements.msg.value.trim();
+                const n = this.elements.n.value.trim();
+                const limit = this.elements.limit.value || '30';
+                const type = this.elements.type.value;
+
+                // 校验必填参数
+                if (!msg) {
+                    this.showError('请输入搜索关键词');
+                    return;
                 }
 
-                const response = await fetch(url, options);
-                const data = await response.text();
+                // 显示加载动画
+                this.showLoading(true);
+
                 try {
-                    resultDom.textContent = JSON.stringify(JSON.parse(data), null, 2);
-                } catch {
-                    resultDom.textContent = data;
+                    // 构建请求URL
+                    const url = this.buildRequestUrl(msg, n, limit, type);
+                    
+                    // 发送请求
+                    const response = await fetch(url);
+                    
+                    if (!response.ok) {
+                        throw new Error(`请求失败: ${response.status}`);
+                    }
+
+                    // 解析响应
+                    const data = type === 'json' 
+                        ? await response.json()
+                        : await response.text();
+
+                    // 处理响应数据
+                    this.handleResponse(data, type);
+
+                } catch (error) {
+                    this.showError(`请求异常: ${error.message}`);
+                } finally {
+                    this.showLoading(false);
                 }
-            } catch (error) {
-                resultDom.textContent = `请求失败：${error.message}`;
+            }
+
+            buildRequestUrl(msg, n, limit, type) {
+                const params = new URLSearchParams({
+                    msg,
+                    limit,
+                    type
+                });
+                
+                if (n) params.append('n', n);
+                
+                return `https://api.cenguigui.cn/api/music/qianqian_music.php?${params.toString()}`;
+            }
+
+            handleResponse(data, type) {
+                if (type === 'json') {
+                    this.handleJsonResponse(data);
+                } else {
+                    this.handleTextResponse(data);
+                }
+            }
+
+            handleJsonResponse(data) {
+                if (data.code !== 200) {
+                    this.showError(data.msg || '接口返回数据异常');
+                    return;
+                }
+
+                if (Array.isArray(data.data)) {
+                    this.musicListData = data.data;
+                    this.renderMusicList();
+                    this.elements.resultTitle.textContent = `搜索结果 (${data.data.length} 首)`;
+                } else {
+                    this.currentMusic = data.data;
+                    this.renderMusicDetail(data.data);
+                    this.elements.resultTitle.textContent = '歌曲详情';
+                }
+                
+                this.showResultContainer();
+            }
+
+            handleTextResponse(text) {
+                this.elements.resultContent.innerHTML = `
+                    <div style="background: #f8f9fa; padding: 20px; border-radius: var(--radius-md);">
+                        <pre style="white-space: pre-wrap; word-wrap: break-word; font-family: monospace;">${this.escapeHtml(text)}</pre>
+                    </div>
+                `;
+                this.elements.resultTitle.textContent = '文本格式结果';
+                this.showResultContainer();
+            }
+
+            renderMusicList() {
+                if (this.musicListData.length === 0) {
+                    this.elements.resultContent.innerHTML = `
+                        <div class="error-message">
+                            <p>未搜索到相关歌曲，请尝试其他关键词</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                const listHtml = this.musicListData.map((item, index) => `
+                    <div class="music-item" onclick="musicTool.showMusicDetail(${index})">
+                        <div class="music-index">${index + 1}</div>
+                        <div class="music-info">
+                            <div class="music-title">${this.escapeHtml(item.title || '未知标题')}</div>
+                            <div class="music-singer">${this.escapeHtml(item.singer || '未知歌手')}</div>
+                        </div>
+                    </div>
+                `).join('');
+
+                this.elements.resultContent.innerHTML = `
+                    <div class="music-list">
+                        ${listHtml}
+                    </div>
+                `;
+            }
+
+            renderMusicDetail(music) {
+                const musicUrl = this.escapeHtml(music.music_url || '');
+                const coverUrl = this.escapeHtml(music.cover || 'https://via.placeholder.com/200');
+                const title = this.escapeHtml(music.title || '未知标题');
+                const singer = this.escapeHtml(music.singer || '未知歌手');
+                const link = this.escapeHtml(music.link || '#');
+                const lyric = this.escapeHtml(music.lyric || '#');
+
+                this.elements.resultContent.innerHTML = `
+                    <div class="music-detail">
+                        <div class="detail-header">
+                            <img src="${coverUrl}" alt="歌曲封面" class="detail-cover" onerror="this.src='https://via.placeholder.com/200'">
+                            <h2 class="detail-title">${title}</h2>
+                            <p class="detail-singer">🎤 ${singer}</p>
+                        </div>
+
+                        <audio controls class="audio-player">
+                            <source src="${musicUrl}" type="audio/mpeg">
+                            您的浏览器不支持音频元素
+                        </audio>
+
+                        <div class="action-buttons">
+                            <button class="action-btn primary" onclick="window.open('${link}', '_blank')">
+                                <i>🔗</i> 打开原链接
+                            </button>
+                            <button class="action-btn secondary" onclick="window.open('${lyric}', '_blank')">
+                                <i>📄</i> 查看歌词
+                            </button>
+                        </div>
+                    </div>
+                `;
+
+                // 自动播放音乐
+                const audio = this.elements.resultContent.querySelector('audio');
+                if (audio) {
+                    audio.play().catch(() => {
+                        console.log('自动播放被阻止，需要用户交互');
+                    });
+                }
+            }
+
+            showMusicDetail(index) {
+                const music = this.musicListData[index];
+                if (music) {
+                    this.renderMusicDetail(music);
+                    this.elements.resultTitle.textContent = '歌曲详情';
+                    this.showResultContainer();
+                }
+            }
+
+            showLoading(show) {
+                this.elements.loading.style.display = show ? 'block' : 'none';
+            }
+
+            showResultContainer() {
+                this.elements.resultContainer.style.display = 'block';
+                this.elements.resultContainer.scrollIntoView({ behavior: 'smooth' });
+            }
+
+            clearResults() {
+                this.elements.resultContainer.style.display = 'none';
+                this.elements.resultContent.innerHTML = '';
+                this.musicListData = [];
+                this.currentMusic = null;
+            }
+
+            showError(message) {
+                this.elements.resultContent.innerHTML = `
+                    <div class="error-message">
+                        <p>${this.escapeHtml(message)}</p>
+                    </div>
+                `;
+                this.elements.resultTitle.textContent = '发生错误';
+                this.showResultContainer();
+                this.showLoading(false);
+            }
+
+            showSuccess(message) {
+                this.elements.resultContent.innerHTML = `
+                    <div class="success-message">
+                        <p>${this.escapeHtml(message)}</p>
+                    </div>
+                `;
+                this.elements.resultTitle.textContent = '操作成功';
+                this.showResultContainer();
+                this.showLoading(false);
+            }
+
+            escapeHtml(text) {
+                const div = document.createElement('div');
+                div.textContent = text;
+                return div.innerHTML;
             }
         }
+
+        // 初始化音乐工具
+        let musicTool;
+        document.addEventListener('DOMContentLoaded', () => {
+            musicTool = new MusicTool();
+        });
     </script>
 </body>
 </html>
